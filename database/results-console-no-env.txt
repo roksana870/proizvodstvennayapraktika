@@ -1,0 +1,1 @@
+Задайте переменную окружения PRACTICE_DB_CONNECTION.

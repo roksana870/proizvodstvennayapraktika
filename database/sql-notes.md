@@ -1073,3 +1073,499 @@ IX_Employees_Salary NONCLUSTERED
 ### Вывод
 
 До создания индексов использован Clustered Index Scan. После создания оптимизатор самостоятельно выбрал Index Seek по IX_Employees_DepartmentId. Принудительный поиск приведён отдельным дополнительным запросом. Во всех трёх случаях logical reads = 2: на 10 строках изменения числа чтений нет. INCLUDE(Salary) покрывает запрос, а EmployeeId хранится как ключ кластерного индекса. Обе созданные структуры — NONCLUSTERED. Полные текстовые планы и STATISTICS IO приведены в результате.
+
+## Уровень 3 — задания 21–30
+
+SQL выполнен на Practice.db. Процедуры и функции сохранены в базе. Консольный проект: PracticeConsole/. Данные сотрудников после проверок совпадают с исходными.
+
+## Задание 21. Хранимые процедуры
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_GetEmployeesByDepartment @DeptId INT AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT EmployeeId, EmployeeName, Salary FROM dbo.Employees
+    WHERE DepartmentId = @DeptId ORDER BY EmployeeId;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_GetDepartmentAverageSalary
+    @DeptId INT, @AverageSalary DECIMAL(10,2) OUTPUT AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT @AverageSalary = CAST(ROUND(AVG(Salary),2) AS DECIMAL(10,2))
+    FROM dbo.Employees WHERE DepartmentId = @DeptId;
+END;
+GO
+EXEC dbo.sp_GetEmployeesByDepartment @DeptId = 1;
+DECLARE @Average DECIMAL(10,2);
+EXEC dbo.sp_GetDepartmentAverageSalary @DeptId = 1, @AverageSalary = @Average OUTPUT;
+SELECT @Average AS AverageSalary;
+EXEC dbo.sp_GetEmployeesByDepartment @DeptId = -1;
+EXEC dbo.sp_GetDepartmentAverageSalary @DeptId = -1, @AverageSalary = @Average OUTPUT;
+SELECT @Average AS EmptyDepartmentAverage;
+```
+
+### Результат
+
+```text
+EmployeeId EmployeeName Salary
+---------- ------------ ------
+1 Анна Иванова 65000.00
+2 Пётр Сидоров 72000.00
+3 Мария Кузнецова 55000.00
+4 Иван Петров 48000.00
+AverageSalary
+-------------
+60000.00
+EmployeeId EmployeeName Salary
+---------- ------------ ------
+EmptyDepartmentAverage
+----------------------
+NULL
+```
+
+### Вывод
+
+Процедура отдела 1 возвращает 4 сотрудников; OUTPUT содержит 60000.00. Для отсутствующего отдела первая выборка пуста, средняя равна NULL.
+
+## Задание 22. Скалярная и табличная функции
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+CREATE OR ALTER FUNCTION dbo.fn_GetAnnualSalary(@MonthlySalary DECIMAL(10,2))
+RETURNS DECIMAL(12,2) AS
+BEGIN
+    RETURN @MonthlySalary * 12;
+END;
+GO
+CREATE OR ALTER FUNCTION dbo.fn_GetEmployeesBySalaryRange(
+    @Min DECIMAL(10,2), @Max DECIMAL(10,2))
+RETURNS TABLE AS RETURN (
+    SELECT EmployeeId, EmployeeName, Salary FROM dbo.Employees
+    WHERE Salary BETWEEN @Min AND @Max
+);
+GO
+SELECT EmployeeName, Salary, dbo.fn_GetAnnualSalary(Salary) AS AnnualSalary
+FROM dbo.Employees ORDER BY EmployeeId;
+SELECT * FROM dbo.fn_GetEmployeesBySalaryRange(50000,65000) ORDER BY EmployeeId;
+SELECT dbo.fn_GetAnnualSalary(NULL) AS NullAnnualSalary;
+SELECT COUNT(*) AS ReversedRangeCount FROM dbo.fn_GetEmployeesBySalaryRange(65000,50000);
+```
+
+### Результат
+
+```text
+EmployeeName Salary AnnualSalary
+------------ ------ ------------
+Анна Иванова 65000.00 780000.00
+Пётр Сидоров 72000.00 864000.00
+Мария Кузнецова 55000.00 660000.00
+Иван Петров 48000.00 576000.00
+Ольга Смирнова 61000.00 732000.00
+Дмитрий Орлов 58000.00 696000.00
+Елена Волкова 52000.00 624000.00
+Сергей Морозов 45000.00 540000.00
+Наталья Соколова 43000.00 516000.00
+Алексей Лебедев 90000.00 1080000.00
+EmployeeId EmployeeName Salary
+---------- ------------ ------
+1 Анна Иванова 65000.00
+3 Мария Кузнецова 55000.00
+5 Ольга Смирнова 61000.00
+6 Дмитрий Орлов 58000.00
+7 Елена Волкова 52000.00
+NullAnnualSalary
+----------------
+NULL
+ReversedRangeCount
+------------------
+0
+```
+
+### Вывод
+
+Годовая зарплата равна месячной, умноженной на 12. Диапазон 50000–65000 включает границы и даёт 5 сотрудников. NULL передаётся в результат; обратный диапазон возвращает 0 строк.
+
+## Задание 23. Ранжирование сотрудников
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT EmployeeName, DepartmentId, Salary,
+       ROW_NUMBER() OVER(ORDER BY Salary DESC, EmployeeId) AS RowNumber,
+       RANK() OVER(PARTITION BY DepartmentId ORDER BY Salary DESC) AS SalaryRank,
+       DENSE_RANK() OVER(PARTITION BY DepartmentId ORDER BY Salary DESC) AS DenseSalaryRank
+FROM dbo.Employees ORDER BY Salary DESC, EmployeeId;
+-- В исходных данных нет равных зарплат. Пример не меняет Employees.
+WITH Example AS (
+    SELECT * FROM (VALUES
+        (1,N'Сотрудник 1',1,CAST(70000 AS DECIMAL(10,2))),
+        (2,N'Сотрудник 2',1,CAST(70000 AS DECIMAL(10,2))),
+        (3,N'Сотрудник 3',1,CAST(60000 AS DECIMAL(10,2)))
+    ) v(EmployeeId,EmployeeName,DepartmentId,Salary)
+)
+SELECT EmployeeName, Salary,
+       ROW_NUMBER() OVER(ORDER BY Salary DESC,EmployeeId) AS RowNumber,
+       RANK() OVER(PARTITION BY DepartmentId ORDER BY Salary DESC) AS SalaryRank,
+       DENSE_RANK() OVER(PARTITION BY DepartmentId ORDER BY Salary DESC) AS DenseSalaryRank
+FROM Example ORDER BY Salary DESC,EmployeeId;
+```
+
+### Результат
+
+```text
+EmployeeName DepartmentId Salary RowNumber SalaryRank DenseSalaryRank
+------------ ------------ ------ --------- ---------- ---------------
+Алексей Лебедев 4 90000.00 1 1 1
+Пётр Сидоров 1 72000.00 2 1 1
+Анна Иванова 1 65000.00 3 2 2
+Ольга Смирнова 2 61000.00 4 1 1
+Дмитрий Орлов 2 58000.00 5 2 2
+Мария Кузнецова 1 55000.00 6 3 3
+Елена Волкова 2 52000.00 7 3 3
+Иван Петров 1 48000.00 8 4 4
+Сергей Морозов 3 45000.00 9 1 1
+Наталья Соколова 3 43000.00 10 2 2
+EmployeeName Salary RowNumber SalaryRank DenseSalaryRank
+------------ ------ --------- ---------- ---------------
+Сотрудник 1 70000.00 1 1 1
+Сотрудник 2 70000.00 2 1 1
+Сотрудник 3 60000.00 3 3 2
+```
+
+### Вывод
+
+ROW_NUMBER нумерует строки без повторов. При равных зарплатах RANK даёт 1, 1, 3, а DENSE_RANK — 1, 1, 2. EmployeeId добавлен только к ROW_NUMBER, чтобы не разрушить равенство рангов.
+
+## Задание 24. Оконные агрегаты
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT EmployeeName, DepartmentId, Salary,
+       SUM(Salary) OVER(PARTITION BY DepartmentId) AS DepartmentTotal,
+       CAST(ROUND(AVG(Salary) OVER(PARTITION BY DepartmentId),2) AS DECIMAL(10,2)) AS DepartmentAverage,
+       CAST(ROUND(Salary - AVG(Salary) OVER(PARTITION BY DepartmentId),2) AS DECIMAL(10,2)) AS Difference
+FROM dbo.Employees ORDER BY DepartmentId,EmployeeId;
+SELECT DepartmentId,SUM(Salary) AS DepartmentTotal,
+       CAST(ROUND(AVG(Salary),2) AS DECIMAL(10,2)) AS DepartmentAverage
+FROM dbo.Employees GROUP BY DepartmentId ORDER BY DepartmentId;
+```
+
+### Результат
+
+```text
+EmployeeName DepartmentId Salary DepartmentTotal DepartmentAverage Difference
+------------ ------------ ------ --------------- ----------------- ----------
+Анна Иванова 1 65000.00 240000.00 60000.00 5000.00
+Пётр Сидоров 1 72000.00 240000.00 60000.00 12000.00
+Мария Кузнецова 1 55000.00 240000.00 60000.00 -5000.00
+Иван Петров 1 48000.00 240000.00 60000.00 -12000.00
+Ольга Смирнова 2 61000.00 171000.00 57000.00 4000.00
+Дмитрий Орлов 2 58000.00 171000.00 57000.00 1000.00
+Елена Волкова 2 52000.00 171000.00 57000.00 -5000.00
+Сергей Морозов 3 45000.00 88000.00 44000.00 1000.00
+Наталья Соколова 3 43000.00 88000.00 44000.00 -1000.00
+Алексей Лебедев 4 90000.00 90000.00 90000.00 .00
+DepartmentId DepartmentTotal DepartmentAverage
+------------ --------------- -----------------
+1 240000.00 60000.00
+2 171000.00 57000.00
+3 88000.00 44000.00
+4 90000.00 90000.00
+```
+
+### Вывод
+
+Суммы отделов: 240000, 171000, 88000, 90000; средние: 60000, 57000, 44000, 90000. Они совпадают с GROUP BY. Оконные функции сохраняют строку каждого сотрудника; без ORDER BY в окне рассчитывается итог по всему отделу.
+
+## Задание 25. CTE
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+WITH AvgSalary AS (SELECT AVG(Salary) AS AverageSalary FROM dbo.Employees)
+SELECT e.EmployeeName,e.Salary FROM dbo.Employees e
+CROSS JOIN AvgSalary a WHERE e.Salary > a.AverageSalary ORDER BY e.EmployeeId;
+SELECT EmployeeName,Salary FROM dbo.Employees
+WHERE Salary > (SELECT AVG(Salary) FROM dbo.Employees) ORDER BY EmployeeId;
+WITH DepartmentAverages AS (
+    SELECT DepartmentId,AVG(Salary) AS AverageSalary
+    FROM dbo.Employees GROUP BY DepartmentId
+)
+SELECT TOP(3) d.DepartmentName,CAST(a.AverageSalary AS DECIMAL(10,2)) AS AverageSalary
+FROM DepartmentAverages a
+INNER JOIN dbo.Departments d ON d.DepartmentId=a.DepartmentId
+ORDER BY a.AverageSalary DESC,a.DepartmentId;
+```
+
+### Результат
+
+```text
+EmployeeName Salary
+------------ ------
+Анна Иванова 65000.00
+Пётр Сидоров 72000.00
+Ольга Смирнова 61000.00
+Алексей Лебедев 90000.00
+EmployeeName Salary
+------------ ------
+Анна Иванова 65000.00
+Пётр Сидоров 72000.00
+Ольга Смирнова 61000.00
+Алексей Лебедев 90000.00
+DepartmentName AverageSalary
+-------------- -------------
+Менеджмент 90000.00
+Разработка 60000.00
+Аналитика 57000.00
+```
+
+### Вывод
+
+Оба варианта возвращают 4 сотрудников с зарплатой выше 58900. CTE даёт имя промежуточному результату; короткий вариант с подзапросом удобен для одного условия. Топ-3: Менеджмент, Разработка, Аналитика.
+
+## Задание 26. Категории зарплат и стажа
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT EmployeeName,Salary,
+       CASE WHEN Salary > 60000 THEN 'High'
+            WHEN Salary BETWEEN 40000 AND 60000 THEN 'Medium'
+            ELSE 'Low' END AS SalaryLevel,
+       HireDate,
+       CASE WHEN HireDate < '20200101' THEN 'Senior'
+            WHEN HireDate < '20230101' THEN 'Mid'
+            ELSE 'Junior' END AS Tenure
+FROM dbo.Employees ORDER BY EmployeeId;
+```
+
+### Результат
+
+```text
+EmployeeName Salary SalaryLevel HireDate Tenure
+------------ ------ ----------- -------- ------
+Анна Иванова 65000.00 High 2020-03-15 Mid
+Пётр Сидоров 72000.00 High 2019-07-01 Senior
+Мария Кузнецова 55000.00 Medium 2021-11-20 Mid
+Иван Петров 48000.00 Medium 2023-02-10 Junior
+Ольга Смирнова 61000.00 High 2020-09-05 Mid
+Дмитрий Орлов 58000.00 Medium 2022-04-18 Mid
+Елена Волкова 52000.00 Medium 2023-06-01 Junior
+Сергей Морозов 45000.00 Medium 2021-12-12 Mid
+Наталья Соколова 43000.00 Medium 2024-01-15 Junior
+Алексей Лебедев 90000.00 High 2018-05-25 Senior
+```
+
+### Вывод
+
+High — 4 сотрудника, Medium — 6. По дате найма Senior — 2, Mid — 5, Junior — 3. Все даты 2022 года относятся к Mid. Обязательные поля схемы не содержат NULL.
+
+## Задание 27. Даты и полные годы стажа
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+DECLARE @Today DATE = CAST(GETDATE() AS DATE);
+SELECT @Today AS CalculationDate;
+SELECT EmployeeName,HireDate,
+       DATEDIFF(YEAR,HireDate,@Today) AS CalendarYearBoundaries,
+       DATEDIFF(YEAR,HireDate,@Today)
+         - CASE WHEN DATEADD(YEAR,DATEDIFF(YEAR,HireDate,@Today),HireDate) > @Today THEN 1 ELSE 0 END AS FullYears,
+       DATEDIFF(MONTH,HireDate,@Today) AS CalendarMonthBoundaries,
+       DATEDIFF(MONTH,HireDate,@Today)
+         - CASE WHEN DATEADD(MONTH,DATEDIFF(MONTH,HireDate,@Today),HireDate) > @Today THEN 1 ELSE 0 END AS FullMonths,
+       DATEADD(YEAR,1,HireDate) AS OneYearAfterHire,
+       FORMAT(HireDate,'dd.MM.yyyy') AS FormattedHireDate
+FROM dbo.Employees ORDER BY EmployeeId;
+-- Проверка перед годовщиной, в годовщину и при найме 29 февраля.
+SELECT HireDate,AsOfDate,
+       DATEDIFF(YEAR,HireDate,AsOfDate)
+       - CASE WHEN DATEADD(YEAR,DATEDIFF(YEAR,HireDate,AsOfDate),HireDate) > AsOfDate THEN 1 ELSE 0 END AS FullYears
+FROM (VALUES
+    (CAST('20211120' AS DATE),CAST('20261101' AS DATE)),
+    (CAST('20211120' AS DATE),CAST('20261120' AS DATE)),
+    (CAST('20200229' AS DATE),CAST('20210228' AS DATE)))
+    v(HireDate,AsOfDate);
+```
+
+### Результат
+
+```text
+CalculationDate
+---------------
+2026-11-01
+EmployeeName HireDate CalendarYearBoundaries FullYears CalendarMonthBoundaries FullMonths OneYearAfterHire FormattedHireDate
+------------ -------- ---------------------- --------- ----------------------- ---------- ---------------- -----------------
+Анна Иванова 2020-03-15 6 6 80 79 2021-03-15 15.03.2020
+Пётр Сидоров 2019-07-01 7 7 88 88 2020-07-01 01.07.2019
+Мария Кузнецова 2021-11-20 5 4 60 59 2022-11-20 20.11.2021
+Иван Петров 2023-02-10 3 3 45 44 2024-02-10 10.02.2023
+Ольга Смирнова 2020-09-05 6 6 74 73 2021-09-05 05.09.2020
+Дмитрий Орлов 2022-04-18 4 4 55 54 2023-04-18 18.04.2022
+Елена Волкова 2023-06-01 3 3 41 41 2024-06-01 01.06.2023
+Сергей Морозов 2021-12-12 5 4 59 58 2022-12-12 12.12.2021
+Наталья Соколова 2024-01-15 2 2 34 33 2025-01-15 15.01.2024
+Алексей Лебедев 2018-05-25 8 8 102 101 2019-05-25 25.05.2018
+HireDate AsOfDate FullYears
+-------- -------- ---------
+2021-11-20 2026-11-01 4
+2021-11-20 2026-11-20 5
+2020-02-29 2021-02-28 1
+```
+
+### Вывод
+
+DATEDIFF считает пересечённые границы года или месяца, поэтому для полного стажа вычитается 1, если годовщина ещё впереди. Перед годовщиной 4 полных года, в годовщину 5. Для 29 февраля используется поведение DATEADD: годовщина в невисокосном году — 28 февраля.
+
+Справка по DATEDIFF: [Microsoft Learn](https://learn.microsoft.com/en-us/sql/t-sql/functions/datediff-transact-sql).
+
+## Задание 28. Подключение и чтение сотрудников
+
+### Код
+
+[PracticeConsole/Program.cs](PracticeConsole/Program.cs): чтение PRACTICE_DB_CONNECTION, OpenAsync, ListEmployees, ExecuteReaderAsync и обработка SqlException.
+Пакет Microsoft.Data.SqlClient подключён в файле проекта.
+
+Запрос: SELECT EmployeeName, Salary FROM dbo.Employees ORDER BY EmployeeId;
+
+### Результат
+
+Приложение возвращает 10 сотрудников. Полный вывод приведён ниже.
+Без переменной окружения выводится «Задайте переменную окружения PRACTICE_DB_CONNECTION.», код завершения 1.
+При ошибке SQL программа выводит код ошибки без раскрытия строки подключения; код завершения 2.
+
+### Вывод
+
+Подключение открывается асинхронно, строки читаются через SqlDataReader.
+Строка подключения берётся только из окружения и не сохранена в исходниках.
+
+## Задание 29. Параметризованная вставка
+
+### Код
+
+[PracticeConsole/Program.cs](PracticeConsole/Program.cs): AddEmployee(string name, decimal salary, int departmentId).
+Запрос INSERT INTO dbo.Employees(EmployeeName,Salary,HireDate,DepartmentId,ManagerId)
+OUTPUT INSERTED.EmployeeId VALUES (@name,@salary,CAST(GETDATE() AS DATE),@deptId,NULL).
+Параметры имеют типы NVARCHAR(100), DECIMAL(10,2), INT.
+После вставки выполняется SELECT по полученному EmployeeId с параметром @id.
+
+### Результат
+
+Команда demo вставила сотрудника с апострофом в имени и зарплатой 50000.25.
+SELECT подтвердил сохранённую запись. После демонстрации запись удалена по полученному EmployeeId.
+Команда add сохраняет сотрудника и не удаляет его.
+Несуществующий отдел вызвал ошибку FK 547, обработанную программой.
+Отрицательная зарплата отклонена до отправки SQL.
+Ошибки дубликатов 2601 и 2627 обрабатываются отдельно.
+В исходной схеме имя сотрудника не уникально: одинаковые имена сами по себе не считаются ошибкой.
+
+### Вывод
+
+Значения передаются через параметры без конкатенации SQL.
+HireDate заполняется текущей датой сервера, ManagerId — NULL.
+Удаление демонстрационной записи не возвращает счётчик IDENTITY назад: пропуски в номерах допустимы.
+
+## Задание 30. Отчёт по отделам
+
+### Код
+
+[PracticeConsole/Program.cs](PracticeConsole/Program.cs): PrintReport, ExecuteReader, выравнивание колонок и IsDBNull.
+
+SELECT d.DepartmentName, COUNT(e.EmployeeId) AS EmpCount, AVG(e.Salary) AS AvgSalary
+FROM dbo.Departments d LEFT JOIN dbo.Employees e ON d.DepartmentId=e.DepartmentId
+GROUP BY d.DepartmentName ORDER BY d.DepartmentName;
+
+### Результат
+
+Аналитика — 3 сотрудника, средняя 57000.00.
+Менеджмент — 1 сотрудник, средняя 90000.00.
+Разработка — 4 сотрудника, средняя 60000.00.
+Тестирование — 2 сотрудника, средняя 44000.00.
+
+Проверочный пустой отдел отображается как 0 сотрудников и N/A.
+При отсутствии отделов выводится «Нет данных для отчёта».
+Проверочные изменения выполнены в транзакции и отменены.
+
+### Вывод
+
+LEFT JOIN сохраняет отделы без сотрудников. COUNT(e.EmployeeId) даёт 0 для пустого отдела; AVG возвращает NULL, который отображается как N/A.
+
+### Вывод консольного приложения
+```text
+Задание 28. Сотрудники
+Анна Иванова                 65000.00
+Пётр Сидоров                 72000.00
+Мария Кузнецова              55000.00
+Иван Петров                  48000.00
+Ольга Смирнова               61000.00
+Дмитрий Орлов                58000.00
+Елена Волкова                52000.00
+Сергей Морозов               45000.00
+Наталья Соколова             43000.00
+Алексей Лебедев              90000.00
+Всего: 10
+Задание 30. Отчёт по отделам
+Отдел                           Сотрудников   Средняя зарплата
+Аналитика                                 3           57000.00
+Менеджмент                                1           90000.00
+Разработка                                4           60000.00
+Тестирование                              2           44000.00
+Задание 29. Вставка и проверка
+Добавлен: 11 | Учебный сотрудник ' SQL | 50000.25 | отдел 1 | 01.11.2026
+Вставка сохранена, SELECT вернул 1 запись.
+Демонстрационная запись удалена. Осталось: 0
+Проверки
+FK: Нарушен внешний ключ: указанного отдела нет или запись используется другими данными.
+Отрицательная зарплата: отклонена.
+Задание 30. Отчёт по отделам
+Отдел                           Сотрудников   Средняя зарплата
+Аналитика                                 3           57000.00
+Менеджмент                                1           90000.00
+Пустой отдел для проверки                 0                N/A
+Разработка                                4           60000.00
+Тестирование                              2           44000.00
+Задание 28. Сотрудники
+Сотрудников нет.
+Всего: 0
+Задание 30. Отчёт по отделам
+Отдел                           Сотрудников   Средняя зарплата
+Нет данных для отчёта.
+Проверочные изменения отменены.
+Задание 28. Сотрудники
+Анна Иванова                 65000.00
+Пётр Сидоров                 72000.00
+Мария Кузнецова              55000.00
+Иван Петров                  48000.00
+Ольга Смирнова               61000.00
+Дмитрий Орлов                58000.00
+Елена Волкова                52000.00
+Сергей Морозов               45000.00
+Наталья Соколова             43000.00
+Алексей Лебедев              90000.00
+Всего: 10
+Задание 30. Отчёт по отделам
+Отдел                           Сотрудников   Средняя зарплата
+Аналитика                                 3           57000.00
+Менеджмент                                1           90000.00
+Разработка                                4           60000.00
+Тестирование                              2           44000.00
+```
