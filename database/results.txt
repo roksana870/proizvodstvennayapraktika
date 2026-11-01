@@ -1,4 +1,4 @@
-﻿Контекст базы данных изменен на "PracticeDB".
+﻿Контекст базы данных изменен на "Practice.db".
 ===TASK 1===
 TABLE_NAME
 ----------
@@ -14,10 +14,10 @@ FK_Employees_Departments Employees DepartmentId Departments DepartmentId
 FK_Employees_Manager Employees ManagerId Employees EmployeeId
 TableName PrimaryKeyName
 --------- --------------
-Departments PK__Departme__B2079BEDBF753FD3
+Departments PK__Departme__B2079BED14BE24F6
 EmployeeProjects PK_EmployeeProjects
-Employees PK__Employee__7AD04F1180168FA6
-Projects PK__Projects__761ABEF0BCC861CF
+Employees PK__Employee__7AD04F11301DD124
+Projects PK__Projects__761ABEF086B5BD10
 TABLE_NAME COLUMN_NAME DATA_TYPE IS_NULLABLE
 ---------- ----------- --------- -----------
 Departments DepartmentId int NO

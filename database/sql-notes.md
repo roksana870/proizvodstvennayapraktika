@@ -1,8 +1,8 @@
 # SQL notes — Уровень 1 (задания 1–10)
 
-Учебная база: PracticeDB. Проверено 01.11.2026 на локальном Microsoft SQL Server 2022 (16.0.1000.6) через sqlcmd. Ниже приведён фактический вывод сервера. Порядок кириллических имён определяется сортировкой базы.
+Учебная база: Practice.db. Проверено 01.11.2026 на локальном Microsoft SQL Server 2022 (16.0.1000.6) через sqlcmd. Ниже приведён фактический вывод сервера. Порядок кириллических имён определяется сортировкой базы.
 
-Запуск: сначала init.sql, затем level-1.sql. **init.sql удаляет и заново создаёт PracticeDB: повторный запуск уничтожит изменения в этой учебной базе.** Запросы level-1.sql только читают данные и безопасны для повторного выполнения.
+Запуск: сначала init.sql, затем level-1.sql. **init.sql удаляет и заново создаёт Practice.db: повторный запуск уничтожит изменения в этой учебной базе.** Запросы level-1.sql только читают данные и безопасны для повторного выполнения.
 
 ## Задание 1. Создание базы и таблиц
 
@@ -14,17 +14,17 @@
 USE master;
 GO
 -- =====================================================
--- init.sql — учебная БД PracticeDB
+-- init.sql — учебная БД Practice.db
 -- =====================================================
-IF DB_ID('PracticeDB') IS NOT NULL
+IF DB_ID('Practice.db') IS NOT NULL
 BEGIN
-    ALTER DATABASE PracticeDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE PracticeDB;
+    ALTER DATABASE [Practice.db] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [Practice.db];
 END
 GO
-CREATE DATABASE PracticeDB;
+CREATE DATABASE [Practice.db];
 GO
-USE PracticeDB;
+USE [Practice.db];
 GO
 CREATE TABLE Departments (
     DepartmentId   INT PRIMARY KEY IDENTITY(1,1),
@@ -101,10 +101,10 @@ FK_Employees_Departments Employees DepartmentId Departments DepartmentId
 FK_Employees_Manager Employees ManagerId Employees EmployeeId
 TableName PrimaryKeyName
 --------- --------------
-Departments PK__Departme__B2079BEDBF753FD3
+Departments PK__Departme__B2079BED14BE24F6
 EmployeeProjects PK_EmployeeProjects
-Employees PK__Employee__7AD04F1180168FA6
-Projects PK__Projects__761ABEF0BCC861CF
+Employees PK__Employee__7AD04F11301DD124
+Projects PK__Projects__761ABEF086B5BD10
 TABLE_NAME COLUMN_NAME DATA_TYPE IS_NULLABLE
 ---------- ----------- --------- -----------
 Departments DepartmentId int NO

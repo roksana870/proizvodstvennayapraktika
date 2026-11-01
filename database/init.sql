@@ -1,17 +1,17 @@
 USE master;
 GO
 -- =====================================================
--- init.sql — учебная БД PracticeDB
+-- init.sql — учебная БД Practice.db
 -- =====================================================
-IF DB_ID('PracticeDB') IS NOT NULL
+IF DB_ID('Practice.db') IS NOT NULL
 BEGIN
-    ALTER DATABASE PracticeDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE PracticeDB;
+    ALTER DATABASE [Practice.db] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [Practice.db];
 END
 GO
-CREATE DATABASE PracticeDB;
+CREATE DATABASE [Practice.db];
 GO
-USE PracticeDB;
+USE [Practice.db];
 GO
 CREATE TABLE Departments (
     DepartmentId   INT PRIMARY KEY IDENTITY(1,1),

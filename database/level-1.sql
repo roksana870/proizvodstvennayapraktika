@@ -1,4 +1,4 @@
-USE PracticeDB;
+USE [Practice.db];
 GO
 SET NOCOUNT ON;
 
