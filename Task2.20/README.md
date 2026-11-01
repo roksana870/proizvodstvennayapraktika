@@ -9,3 +9,5 @@
 .gitignore исключает bin, obj, .vs, *.user и локальные данные подключения.
 
 Результаты Git-сценария, ссылка на Pull Request и история после rebase сохраняются в [git-notes.md](../git-notes.md).
+
+[Pull Request #1](https://github.com/roksana870/proizvodstvennayapraktika/pull/1) смержен в main. Интерактивный rebase выполнен: 3 коммита объединены в 1, содержимое файлов сохранено. Вывод git log — в git-notes.md.
