@@ -1,0 +1,280 @@
+﻿Контекст базы данных изменен на "Practice.db".
+===TASK 11===
+EmployeeName ManagerName
+------------ -----------
+Анна Иванова NULL
+Пётр Сидоров NULL
+Мария Кузнецова Пётр Сидоров
+Иван Петров Анна Иванова
+Ольга Смирнова NULL
+Дмитрий Орлов Ольга Смирнова
+Елена Волкова NULL
+Сергей Морозов NULL
+Наталья Соколова Алексей Лебедев
+Алексей Лебедев NULL
+===TASK 12===
+EmployeeName Salary
+------------ ------
+Анна Иванова 65000.00
+Пётр Сидоров 72000.00
+Ольга Смирнова 61000.00
+Алексей Лебедев 90000.00
+EmployeeName Salary
+------------ ------
+Алексей Лебедев 90000.00
+===TASK 13===
+EmployeeName Salary DepartmentId DepartmentAverage Difference
+------------ ------ ------------ ----------------- ----------
+Анна Иванова 65000.00 1 60000.00 5000.00
+Пётр Сидоров 72000.00 1 60000.00 12000.00
+Мария Кузнецова 55000.00 1 60000.00 -5000.00
+Иван Петров 48000.00 1 60000.00 -12000.00
+Ольга Смирнова 61000.00 2 57000.00 4000.00
+Дмитрий Орлов 58000.00 2 57000.00 1000.00
+Елена Волкова 52000.00 2 57000.00 -5000.00
+Сергей Морозов 45000.00 3 44000.00 1000.00
+Наталья Соколова 43000.00 3 44000.00 -1000.00
+Алексей Лебедев 90000.00 4 90000.00 .00
+===TASK 14===
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+2 Пётр Сидоров
+3 Мария Кузнецова
+4 Иван Петров
+5 Ольга Смирнова
+6 Дмитрий Орлов
+7 Елена Волкова
+8 Сергей Морозов
+10 Алексей Лебедев
+EmployeeId EmployeeName
+---------- ------------
+9 Наталья Соколова
+===TASK 15===
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+2 Пётр Сидоров
+3 Мария Кузнецова
+5 Ольга Смирнова
+8 Сергей Морозов
+10 Алексей Лебедев
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+1 Анна Иванова
+2 Пётр Сидоров
+2 Пётр Сидоров
+3 Мария Кузнецова
+5 Ольга Смирнова
+5 Ольга Смирнова
+8 Сергей Морозов
+10 Алексей Лебедев
+10 Алексей Лебедев
+UnionCount
+----------
+6
+UnionAllCount
+-------------
+10
+===TASK 16===
+EmployeeId Salary
+---------- ------
+1 65000.00
+2 72000.00
+3 55000.00
+4 48000.00
+5 61000.00
+6 58000.00
+7 52000.00
+8 45000.00
+9 43000.00
+10 90000.00
+EmployeeId Salary
+---------- ------
+1 71500.00
+2 79200.00
+3 60500.00
+4 52800.00
+5 61000.00
+6 58000.00
+7 52000.00
+8 45000.00
+9 43000.00
+10 90000.00
+EmployeeId HireDate Salary
+---------- -------- ------
+1 2020-03-15 71500.00
+2 2019-07-01 79200.00
+3 2021-11-20 60500.00
+4 2023-02-10 52800.00
+5 2020-09-05 61000.00
+6 2022-04-18 58000.00
+7 2023-06-01 52000.00
+8 2021-12-12 45000.00
+9 2024-01-15 43000.00
+10 2018-05-25 90000.00
+EmployeeId HireDate Salary
+---------- -------- ------
+1 2020-03-15 76500.00
+2 2019-07-01 84200.00
+3 2021-11-20 65500.00
+4 2023-02-10 52800.00
+5 2020-09-05 66000.00
+6 2022-04-18 58000.00
+7 2023-06-01 52000.00
+8 2021-12-12 50000.00
+9 2024-01-15 43000.00
+10 2018-05-25 95000.00
+EmployeeId HireDate
+---------- --------
+4 2023-02-10
+EmployeeId HireDate
+---------- --------
+4 2023-02-11
+EmployeeId Salary HireDate
+---------- ------ --------
+1 65000.00 2020-03-15
+2 72000.00 2019-07-01
+3 55000.00 2021-11-20
+4 48000.00 2023-02-10
+5 61000.00 2020-09-05
+6 58000.00 2022-04-18
+7 52000.00 2023-06-01
+8 45000.00 2021-12-12
+9 43000.00 2024-01-15
+10 90000.00 2018-05-25
+===TASK 17===
+EmployeeId ProjectId Hours
+---------- --------- -----
+9 5 0
+ZeroHoursAfterDelete
+--------------------
+0
+AssignmentsAfterDelete
+----------------------
+14
+EmployeeId EmployeeName
+---------- ------------
+8 Сергей Морозов
+EmployeeId ProjectId Hours
+---------- --------- -----
+8 5 130
+AssignmentsForEmployee8
+-----------------------
+0
+Employee8AfterDelete
+--------------------
+0
+EmployeesAfterDelete
+--------------------
+9
+CopyBeforeDelete
+----------------
+9
+EmployeeId EmployeeName
+---------- ------------
+4 Иван Петров
+CopyAfterWhere
+--------------
+8
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+2 Пётр Сидоров
+3 Мария Кузнецова
+5 Ольга Смирнова
+6 Дмитрий Орлов
+7 Елена Волкова
+9 Наталья Соколова
+10 Алексей Лебедев
+CopyAfterDeleteAll
+------------------
+0
+RestoredEmployees
+-----------------
+10
+RestoredAssignments
+-------------------
+14
+===TASK 18===
+EmployeeId BeforeTransaction
+---------- -----------------
+4 48000.00
+EmployeeId InsideRollbackTransaction
+---------- -------------------------
+4 49000.00
+EmployeeId AfterRollback
+---------- -------------
+4 48000.00
+EmployeeId InsideCommitTransaction
+---------- -----------------------
+4 49000.00
+EmployeeId AfterCommit
+---------- -----------
+4 49000.00
+EmployeeId BeforeRestore
+---------- -------------
+4 49000.00
+EmployeeId AfterRestore
+---------- ------------
+4 48000.00
+===TASK 19===
+EmployeeName DepartmentName ProjectName Hours
+------------ -------------- ----------- -----
+Дмитрий Орлов Аналитика AI Assistant 50
+Дмитрий Орлов Аналитика Data Warehouse 70
+Елена Волкова Аналитика Mobile App 95
+Ольга Смирнова Аналитика Data Warehouse 110
+Алексей Лебедев Менеджмент AI Assistant 200
+Алексей Лебедев Менеджмент CRM System 30
+Анна Иванова Разработка CRM System 120
+Анна Иванова Разработка Data Warehouse 80
+Иван Петров Разработка Legacy Refactor 40
+Иван Петров Разработка Mobile App 90
+Мария Кузнецова Разработка Mobile App 100
+Пётр Сидоров Разработка AI Assistant 60
+Пётр Сидоров Разработка CRM System 150
+Сергей Морозов Тестирование Legacy Refactor 130
+ViewCountAfterDrop
+------------------
+0
+===TASK 20===
+Before indexes
+EmployeeId DepartmentId Salary
+---------- ------------ ------
+1 1 65000.00
+2 1 72000.00
+3 1 55000.00
+Таблица "Employees". Сканирований 1, логических операций чтения 2, физических операций чтения 0, операций чтения страничного сервера 0, операций чтения, выполненных с упреждением 0, операций чтения страничного сервера, выполненных с упреждением 0, логических операций чтения LOB 0, физических операций чтения LOB 0, операций чтения LOB страничного сервера 0, операций чтения LOB, выполненных с упреждением 0, операций чтения LOB страничного сервера, выполненных с упреждением 0.
+Rows Executes StmtText StmtId NodeId Parent PhysicalOp LogicalOp Argument DefinedValues EstimateRows EstimateIO EstimateCPU AvgRowSize TotalSubtreeCost OutputList Warnings Type Parallel EstimateExecutions
+---- -------- -------- ------ ------ ------ ---------- --------- -------- ------------- ------------ ---------- ----------- ---------- ---------------- ---------- -------- ---- -------- ------------------
+3 1 SELECT [EmployeeId],[DepartmentId],[Salary] FROM [dbo].[Employees] WHERE [DepartmentId]=@1 AND [Salary]>@2 1 1 0 NULL NULL NULL NULL 3.3466401 NULL NULL NULL 3.2929999E-3 NULL NULL SELECT 0 NULL
+3 1   |--Clustered Index Scan(OBJECT:([Practice.db].[dbo].[Employees].[PK__Employee__7AD04F11301DD124]), WHERE:([Practice.db].[dbo].[Employees].[DepartmentId]=CONVERT_IMPLICIT(int,[@1],0) AND [Practice.db].[dbo].[Employees].[Salary]>CONVERT_IMPLICIT(decimal(10,0),[@2],0))) 1 2 1 Clustered Index Scan Clustered Index Scan OBJECT:([Practice.db].[dbo].[Employees].[PK__Employee__7AD04F11301DD124]), WHERE:([Practice.db].[dbo].[Employees].[DepartmentId]=CONVERT_IMPLICIT(int,[@1],0) AND [Practice.db].[dbo].[Employees].[Salary]>CONVERT_IMPLICIT(decimal(10,0),[@2],0)) [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] 3.3466401 0.003125 0.000168 24 3.2929999E-3 [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] NULL PLAN_ROW 0 1.0
+After indexes: optimizer choice
+EmployeeId DepartmentId Salary
+---------- ------------ ------
+1 1 65000.00
+2 1 72000.00
+3 1 55000.00
+Таблица "Employees". Сканирований 1, логических операций чтения 2, физических операций чтения 0, операций чтения страничного сервера 0, операций чтения, выполненных с упреждением 0, операций чтения страничного сервера, выполненных с упреждением 0, логических операций чтения LOB 0, физических операций чтения LOB 0, операций чтения LOB страничного сервера 0, операций чтения LOB, выполненных с упреждением 0, операций чтения LOB страничного сервера, выполненных с упреждением 0.
+Rows Executes StmtText StmtId NodeId Parent PhysicalOp LogicalOp Argument DefinedValues EstimateRows EstimateIO EstimateCPU AvgRowSize TotalSubtreeCost OutputList Warnings Type Parallel EstimateExecutions
+---- -------- -------- ------ ------ ------ ---------- --------- -------- ------------- ------------ ---------- ----------- ---------- ---------------- ---------- -------- ---- -------- ------------------
+3 1 SELECT [EmployeeId],[DepartmentId],[Salary] FROM [dbo].[Employees] WHERE [DepartmentId]=@1 AND [Salary]>@2 1 1 0 NULL NULL NULL NULL 3.3466401 NULL NULL NULL 3.2864001E-3 NULL NULL SELECT 0 NULL
+3 1   |--Index Seek(OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD) 1 2 1 Index Seek Index Seek OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] 3.3466401 0.003125 1.6140001E-4 24 3.2864001E-3 [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] NULL PLAN_ROW 0 1.0
+After indexes: forced seek for comparison
+EmployeeId DepartmentId Salary
+---------- ------------ ------
+1 1 65000.00
+2 1 72000.00
+3 1 55000.00
+Таблица "Employees". Сканирований 1, логических операций чтения 2, физических операций чтения 0, операций чтения страничного сервера 0, операций чтения, выполненных с упреждением 0, операций чтения страничного сервера, выполненных с упреждением 0, логических операций чтения LOB 0, физических операций чтения LOB 0, операций чтения LOB страничного сервера 0, операций чтения LOB, выполненных с упреждением 0, операций чтения LOB страничного сервера, выполненных с упреждением 0.
+Rows Executes StmtText StmtId NodeId Parent PhysicalOp LogicalOp Argument DefinedValues EstimateRows EstimateIO EstimateCPU AvgRowSize TotalSubtreeCost OutputList Warnings Type Parallel EstimateExecutions
+---- -------- -------- ------ ------ ------ ---------- --------- -------- ------------- ------------ ---------- ----------- ---------- ---------------- ---------- -------- ---- -------- ------------------
+3 1 SELECT EmployeeId, DepartmentId, Salary FROM dbo.Employees WITH (INDEX(IX_Employees_DepartmentId), FORCESEEK)
+WHERE DepartmentId = 1 AND Salary > 50000 2 1 0 NULL NULL NULL NULL 3.3466401 NULL NULL NULL 3.2864001E-3 NULL NULL SELECT 0 NULL
+3 1   |--Index Seek(OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD) 2 2 1 Index Seek Index Seek OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD, FORCEDINDEX [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] 3.3466401 0.003125 1.6140001E-4 24 3.2864001E-3 [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] NULL PLAN_ROW 0 1.0
+name type_desc
+---- ---------
+IX_Employees_DepartmentId NONCLUSTERED
+IX_Employees_Salary NONCLUSTERED

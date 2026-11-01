@@ -1,4 +1,4 @@
-# SQL notes — Уровень 1 (задания 1–10)
+# Практикум по базам данных
 
 Учебная база: Practice.db. Проверено 01.11.2026 на локальном Microsoft SQL Server 2022 (16.0.1000.6) через sqlcmd. Ниже приведён фактический вывод сервера. Порядок кириллических имён определяется сортировкой базы.
 
@@ -491,3 +491,585 @@ EmployeeName DepartmentName ProjectName Hours
 ### Вывод
 
 Получены 14 строк — по одной на назначение, с сотрудником, отделом, проектом и часами. Сотрудник без проекта не входит в отчёт назначений.
+
+
+## Уровень 2 — задания 11–20
+
+Запросы выполнены на Practice.db через sqlcmd. Скрипт: level-2.sql. В заданиях 16–17 изменения откатываются; в задании 18 после проверки COMMIT зарплата восстанавливается отдельным UPDATE. После задания 19 представление удалено, индексы задания 20 сохранены.
+
+## Задание 11. Руководители сотрудников
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT e.EmployeeName, m.EmployeeName AS ManagerName
+FROM dbo.Employees e
+LEFT JOIN dbo.Employees m ON m.EmployeeId = e.ManagerId
+ORDER BY e.EmployeeId;
+```
+
+### Результат
+
+```text
+EmployeeName ManagerName
+------------ -----------
+Анна Иванова NULL
+Пётр Сидоров NULL
+Мария Кузнецова Пётр Сидоров
+Иван Петров Анна Иванова
+Ольга Смирнова NULL
+Дмитрий Орлов Ольга Смирнова
+Елена Волкова NULL
+Сергей Морозов NULL
+Наталья Соколова Алексей Лебедев
+Алексей Лебедев NULL
+```
+
+### Вывод
+
+У 4 сотрудников указан руководитель, у остальных 6 — NULL. LEFT JOIN сохраняет сотрудников без руководителя.
+
+## Задание 12. Подзапросы в WHERE
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT EmployeeName, Salary FROM dbo.Employees
+WHERE Salary > (SELECT AVG(Salary) FROM dbo.Employees) ORDER BY EmployeeId;
+SELECT EmployeeName, Salary FROM dbo.Employees
+WHERE Salary = (SELECT MAX(Salary) FROM dbo.Employees) ORDER BY EmployeeId;
+```
+
+### Результат
+
+```text
+EmployeeName Salary
+------------ ------
+Анна Иванова 65000.00
+Пётр Сидоров 72000.00
+Ольга Смирнова 61000.00
+Алексей Лебедев 90000.00
+EmployeeName Salary
+------------ ------
+Алексей Лебедев 90000.00
+```
+
+### Вывод
+
+Выше средней зарплаты 58900 — 4 сотрудника. Максимальная зарплата 90000 у Алексея Лебедева; при равенстве максимума запрос вернул бы всех таких сотрудников.
+
+## Задание 13. Отклонение зарплаты от средней
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT e.EmployeeName, e.Salary, e.DepartmentId,
+       CAST(ROUND((SELECT AVG(d.Salary) FROM dbo.Employees d
+                   WHERE d.DepartmentId = e.DepartmentId),2) AS DECIMAL(10,2)) AS DepartmentAverage,
+       CAST(ROUND(e.Salary - (SELECT AVG(d.Salary) FROM dbo.Employees d
+                   WHERE d.DepartmentId = e.DepartmentId),2) AS DECIMAL(10,2)) AS Difference
+FROM dbo.Employees e ORDER BY e.EmployeeId;
+```
+
+### Результат
+
+```text
+EmployeeName Salary DepartmentId DepartmentAverage Difference
+------------ ------ ------------ ----------------- ----------
+Анна Иванова 65000.00 1 60000.00 5000.00
+Пётр Сидоров 72000.00 1 60000.00 12000.00
+Мария Кузнецова 55000.00 1 60000.00 -5000.00
+Иван Петров 48000.00 1 60000.00 -12000.00
+Ольга Смирнова 61000.00 2 57000.00 4000.00
+Дмитрий Орлов 58000.00 2 57000.00 1000.00
+Елена Волкова 52000.00 2 57000.00 -5000.00
+Сергей Морозов 45000.00 3 44000.00 1000.00
+Наталья Соколова 43000.00 3 44000.00 -1000.00
+Алексей Лебедев 90000.00 4 90000.00 .00
+```
+
+### Вывод
+
+Средние зарплаты отделов: 60000, 57000, 44000 и 90000. Положительное отклонение означает зарплату выше средней по своему отделу.
+
+## Задание 14. EXISTS и NOT EXISTS
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT e.EmployeeId, e.EmployeeName FROM dbo.Employees e
+WHERE EXISTS (SELECT 1 FROM dbo.EmployeeProjects ep WHERE ep.EmployeeId = e.EmployeeId)
+ORDER BY e.EmployeeId;
+SELECT e.EmployeeId, e.EmployeeName FROM dbo.Employees e
+WHERE NOT EXISTS (SELECT 1 FROM dbo.EmployeeProjects ep WHERE ep.EmployeeId = e.EmployeeId)
+ORDER BY e.EmployeeId;
+```
+
+### Результат
+
+```text
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+2 Пётр Сидоров
+3 Мария Кузнецова
+4 Иван Петров
+5 Ольга Смирнова
+6 Дмитрий Орлов
+7 Елена Волкова
+8 Сергей Морозов
+10 Алексей Лебедев
+EmployeeId EmployeeName
+---------- ------------
+9 Наталья Соколова
+```
+
+### Вывод
+
+Проекты есть у 9 сотрудников; нет проектов у Натальи Соколовой (9), как в задании 9. В условии есть неточность: задание 8 выводит всех 10 сотрудников с отделами, а не только участников проектов.
+
+## Задание 15. UNION и UNION ALL
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+SELECT EmployeeId, EmployeeName FROM dbo.Employees WHERE Salary > 60000
+UNION
+SELECT EmployeeId, EmployeeName FROM dbo.Employees WHERE HireDate < '20220101'
+ORDER BY EmployeeId;
+SELECT EmployeeId, EmployeeName FROM dbo.Employees WHERE Salary > 60000
+UNION ALL
+SELECT EmployeeId, EmployeeName FROM dbo.Employees WHERE HireDate < '20220101'
+ORDER BY EmployeeId;
+SELECT COUNT(*) AS UnionCount FROM (
+SELECT EmployeeId FROM dbo.Employees WHERE Salary > 60000
+UNION SELECT EmployeeId FROM dbo.Employees WHERE HireDate < '20220101') u;
+SELECT COUNT(*) AS UnionAllCount FROM (
+SELECT EmployeeId FROM dbo.Employees WHERE Salary > 60000
+UNION ALL SELECT EmployeeId FROM dbo.Employees WHERE HireDate < '20220101') u;
+```
+
+### Результат
+
+```text
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+2 Пётр Сидоров
+3 Мария Кузнецова
+5 Ольга Смирнова
+8 Сергей Морозов
+10 Алексей Лебедев
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+1 Анна Иванова
+2 Пётр Сидоров
+2 Пётр Сидоров
+3 Мария Кузнецова
+5 Ольга Смирнова
+5 Ольга Смирнова
+8 Сергей Морозов
+10 Алексей Лебедев
+10 Алексей Лебедев
+UnionCount
+----------
+6
+UnionAllCount
+-------------
+10
+```
+
+### Вывод
+
+UNION возвращает 6 строк, UNION ALL — 10. Четыре сотрудника входят в обе выборки и повторяются при UNION ALL.
+
+## Задание 16. Изменение зарплат и даты найма
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+BEGIN TRANSACTION;
+SELECT EmployeeId, Salary FROM dbo.Employees ORDER BY EmployeeId;
+UPDATE dbo.Employees SET Salary = Salary * 1.10 WHERE DepartmentId = 1;
+SELECT EmployeeId, Salary FROM dbo.Employees ORDER BY EmployeeId;
+SELECT EmployeeId, HireDate, Salary FROM dbo.Employees ORDER BY EmployeeId;
+UPDATE dbo.Employees SET Salary = Salary + 5000 WHERE HireDate < '20220101';
+SELECT EmployeeId, HireDate, Salary FROM dbo.Employees ORDER BY EmployeeId;
+SELECT EmployeeId, HireDate FROM dbo.Employees WHERE EmployeeId = 4;
+UPDATE dbo.Employees SET HireDate = '20230211' WHERE EmployeeId = 4;
+SELECT EmployeeId, HireDate FROM dbo.Employees WHERE EmployeeId = 4;
+ROLLBACK TRANSACTION;
+SELECT EmployeeId, Salary, HireDate FROM dbo.Employees ORDER BY EmployeeId;
+```
+
+### Результат
+
+```text
+EmployeeId Salary
+---------- ------
+1 65000.00
+2 72000.00
+3 55000.00
+4 48000.00
+5 61000.00
+6 58000.00
+7 52000.00
+8 45000.00
+9 43000.00
+10 90000.00
+EmployeeId Salary
+---------- ------
+1 71500.00
+2 79200.00
+3 60500.00
+4 52800.00
+5 61000.00
+6 58000.00
+7 52000.00
+8 45000.00
+9 43000.00
+10 90000.00
+EmployeeId HireDate Salary
+---------- -------- ------
+1 2020-03-15 71500.00
+2 2019-07-01 79200.00
+3 2021-11-20 60500.00
+4 2023-02-10 52800.00
+5 2020-09-05 61000.00
+6 2022-04-18 58000.00
+7 2023-06-01 52000.00
+8 2021-12-12 45000.00
+9 2024-01-15 43000.00
+10 2018-05-25 90000.00
+EmployeeId HireDate Salary
+---------- -------- ------
+1 2020-03-15 76500.00
+2 2019-07-01 84200.00
+3 2021-11-20 65500.00
+4 2023-02-10 52800.00
+5 2020-09-05 66000.00
+6 2022-04-18 58000.00
+7 2023-06-01 52000.00
+8 2021-12-12 50000.00
+9 2024-01-15 43000.00
+10 2018-05-25 95000.00
+EmployeeId HireDate
+---------- --------
+4 2023-02-10
+EmployeeId HireDate
+---------- --------
+4 2023-02-11
+EmployeeId Salary HireDate
+---------- ------ --------
+1 65000.00 2020-03-15
+2 72000.00 2019-07-01
+3 55000.00 2021-11-20
+4 48000.00 2023-02-10
+5 61000.00 2020-09-05
+6 58000.00 2022-04-18
+7 52000.00 2023-06-01
+8 45000.00 2021-12-12
+9 43000.00 2024-01-15
+10 90000.00 2018-05-25
+```
+
+### Вывод
+
+Зарплаты отдела 1 увеличены на 10%, затем 6 сотрудников с наймом до 2022 года получили ещё 5000. Дата найма сотрудника 4 изменена на 2023-02-11. Проверки показывают изменения целевых строк. В конце ROLLBACK восстанавливает учебные данные.
+
+## Задание 17. Удаление записей
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+BEGIN TRANSACTION;
+-- В исходных данных часов 0 нет. Добавляем тестовое назначение.
+INSERT INTO dbo.EmployeeProjects(EmployeeId,ProjectId,Hours) VALUES (9,5,0);
+SELECT * FROM dbo.EmployeeProjects WHERE Hours = 0;
+DELETE FROM dbo.EmployeeProjects WHERE Hours = 0;
+SELECT COUNT(*) AS ZeroHoursAfterDelete FROM dbo.EmployeeProjects WHERE Hours = 0;
+SELECT COUNT(*) AS AssignmentsAfterDelete FROM dbo.EmployeeProjects;
+
+-- У сотрудника 8 нет подчинённых, поэтому self-FK не мешает удалению.
+SELECT EmployeeId, EmployeeName FROM dbo.Employees WHERE EmployeeId = 8;
+SELECT * FROM dbo.EmployeeProjects WHERE EmployeeId = 8;
+DELETE FROM dbo.EmployeeProjects WHERE EmployeeId = 8;
+SELECT COUNT(*) AS AssignmentsForEmployee8 FROM dbo.EmployeeProjects WHERE EmployeeId = 8;
+DELETE FROM dbo.Employees WHERE EmployeeId = 8;
+SELECT COUNT(*) AS Employee8AfterDelete FROM dbo.Employees WHERE EmployeeId = 8;
+SELECT COUNT(*) AS EmployeesAfterDelete FROM dbo.Employees;
+
+SELECT EmployeeId, EmployeeName INTO #EmployeesCopy FROM dbo.Employees;
+SELECT COUNT(*) AS CopyBeforeDelete FROM #EmployeesCopy;
+SELECT * FROM #EmployeesCopy WHERE EmployeeId = 4;
+DELETE FROM #EmployeesCopy WHERE EmployeeId = 4;
+SELECT COUNT(*) AS CopyAfterWhere FROM #EmployeesCopy;
+SELECT * FROM #EmployeesCopy ORDER BY EmployeeId;
+DELETE FROM #EmployeesCopy;
+SELECT COUNT(*) AS CopyAfterDeleteAll FROM #EmployeesCopy;
+DROP TABLE #EmployeesCopy;
+ROLLBACK TRANSACTION;
+SELECT COUNT(*) AS RestoredEmployees FROM dbo.Employees;
+SELECT COUNT(*) AS RestoredAssignments FROM dbo.EmployeeProjects;
+```
+
+### Результат
+
+```text
+EmployeeId ProjectId Hours
+---------- --------- -----
+9 5 0
+ZeroHoursAfterDelete
+--------------------
+0
+AssignmentsAfterDelete
+----------------------
+14
+EmployeeId EmployeeName
+---------- ------------
+8 Сергей Морозов
+EmployeeId ProjectId Hours
+---------- --------- -----
+8 5 130
+AssignmentsForEmployee8
+-----------------------
+0
+Employee8AfterDelete
+--------------------
+0
+EmployeesAfterDelete
+--------------------
+9
+CopyBeforeDelete
+----------------
+9
+EmployeeId EmployeeName
+---------- ------------
+4 Иван Петров
+CopyAfterWhere
+--------------
+8
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+2 Пётр Сидоров
+3 Мария Кузнецова
+5 Ольга Смирнова
+6 Дмитрий Орлов
+7 Елена Волкова
+9 Наталья Соколова
+10 Алексей Лебедев
+CopyAfterDeleteAll
+------------------
+0
+RestoredEmployees
+-----------------
+10
+RestoredAssignments
+-------------------
+14
+```
+
+### Вывод
+
+Удалено тестовое назначение с нулём часов, затем назначение сотрудника 8 и сам сотрудник. На временной копии DELETE с WHERE оставляет 8 строк, без WHERE — 0. После ROLLBACK снова 10 сотрудников и 14 назначений.
+
+## Задание 18. Транзакции
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+DECLARE @OriginalSalary DECIMAL(10,2);
+SELECT @OriginalSalary = Salary FROM dbo.Employees WHERE EmployeeId = 4;
+SELECT EmployeeId, Salary AS BeforeTransaction FROM dbo.Employees WHERE EmployeeId = 4;
+BEGIN TRANSACTION;
+UPDATE dbo.Employees SET Salary = Salary + 1000 WHERE EmployeeId = 4;
+SELECT EmployeeId, Salary AS InsideRollbackTransaction FROM dbo.Employees WHERE EmployeeId = 4;
+ROLLBACK TRANSACTION;
+SELECT EmployeeId, Salary AS AfterRollback FROM dbo.Employees WHERE EmployeeId = 4;
+BEGIN TRANSACTION;
+UPDATE dbo.Employees SET Salary = Salary + 1000 WHERE EmployeeId = 4;
+SELECT EmployeeId, Salary AS InsideCommitTransaction FROM dbo.Employees WHERE EmployeeId = 4;
+COMMIT TRANSACTION;
+SELECT EmployeeId, Salary AS AfterCommit FROM dbo.Employees WHERE EmployeeId = 4;
+-- COMMIT уже выполнен. Отдельным UPDATE восстанавливаем данные для следующих запусков.
+SELECT EmployeeId, Salary AS BeforeRestore FROM dbo.Employees WHERE EmployeeId = 4;
+UPDATE dbo.Employees SET Salary = @OriginalSalary WHERE EmployeeId = 4;
+SELECT EmployeeId, Salary AS AfterRestore FROM dbo.Employees WHERE EmployeeId = 4;
+```
+
+### Результат
+
+```text
+EmployeeId BeforeTransaction
+---------- -----------------
+4 48000.00
+EmployeeId InsideRollbackTransaction
+---------- -------------------------
+4 49000.00
+EmployeeId AfterRollback
+---------- -------------
+4 48000.00
+EmployeeId InsideCommitTransaction
+---------- -----------------------
+4 49000.00
+EmployeeId AfterCommit
+---------- -----------
+4 49000.00
+EmployeeId BeforeRestore
+---------- -------------
+4 49000.00
+EmployeeId AfterRestore
+---------- ------------
+4 48000.00
+```
+
+### Вывод
+
+Внутри транзакции зарплата 49000; после ROLLBACK — 48000; после COMMIT — 49000. Затем отдельный UPDATE возвращает 48000. Это восстановление после проверки, а не откат уже завершённого COMMIT.
+
+## Задание 19. Представление назначений
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+CREATE OR ALTER VIEW dbo.vw_EmployeeDetails AS
+SELECT e.EmployeeName, d.DepartmentName, p.ProjectName, ep.Hours
+FROM dbo.Employees e
+INNER JOIN dbo.Departments d ON d.DepartmentId = e.DepartmentId
+INNER JOIN dbo.EmployeeProjects ep ON ep.EmployeeId = e.EmployeeId
+INNER JOIN dbo.Projects p ON p.ProjectId = ep.ProjectId;
+GO
+SELECT * FROM dbo.vw_EmployeeDetails
+ORDER BY DepartmentName, EmployeeName, ProjectName;
+DROP VIEW dbo.vw_EmployeeDetails;
+SELECT COUNT(*) AS ViewCountAfterDrop FROM sys.views
+WHERE object_id = OBJECT_ID(N'dbo.vw_EmployeeDetails');
+```
+
+### Результат
+
+```text
+EmployeeName DepartmentName ProjectName Hours
+------------ -------------- ----------- -----
+Дмитрий Орлов Аналитика AI Assistant 50
+Дмитрий Орлов Аналитика Data Warehouse 70
+Елена Волкова Аналитика Mobile App 95
+Ольга Смирнова Аналитика Data Warehouse 110
+Алексей Лебедев Менеджмент AI Assistant 200
+Алексей Лебедев Менеджмент CRM System 30
+Анна Иванова Разработка CRM System 120
+Анна Иванова Разработка Data Warehouse 80
+Иван Петров Разработка Legacy Refactor 40
+Иван Петров Разработка Mobile App 90
+Мария Кузнецова Разработка Mobile App 100
+Пётр Сидоров Разработка AI Assistant 60
+Пётр Сидоров Разработка CRM System 150
+Сергей Морозов Тестирование Legacy Refactor 130
+ViewCountAfterDrop
+------------------
+0
+```
+
+### Вывод
+
+Представление вернуло 14 назначений. После DROP VIEW проверка показывает 0. Порядок задаётся в SELECT, а не внутри VIEW.
+
+## Задание 20. Индексы и планы выполнения
+
+### SQL
+
+```sql
+USE [Practice.db];
+GO
+DROP INDEX IF EXISTS IX_Employees_DepartmentId ON dbo.Employees;
+DROP INDEX IF EXISTS IX_Employees_Salary ON dbo.Employees;
+SET STATISTICS IO ON;
+SET STATISTICS PROFILE ON;
+PRINT 'Before indexes';
+SELECT EmployeeId, DepartmentId, Salary FROM dbo.Employees
+WHERE DepartmentId = 1 AND Salary > 50000;
+SET STATISTICS PROFILE OFF;
+SET STATISTICS IO OFF;
+CREATE INDEX IX_Employees_DepartmentId ON dbo.Employees(DepartmentId) INCLUDE(Salary);
+CREATE INDEX IX_Employees_Salary ON dbo.Employees(Salary);
+GO
+SET STATISTICS IO ON;
+SET STATISTICS PROFILE ON;
+PRINT 'After indexes: optimizer choice';
+SELECT EmployeeId, DepartmentId, Salary FROM dbo.Employees
+WHERE DepartmentId = 1 AND Salary > 50000;
+PRINT 'After indexes: forced seek for comparison';
+SELECT EmployeeId, DepartmentId, Salary FROM dbo.Employees WITH (INDEX(IX_Employees_DepartmentId), FORCESEEK)
+WHERE DepartmentId = 1 AND Salary > 50000;
+SET STATISTICS PROFILE OFF;
+SET STATISTICS IO OFF;
+SELECT name, type_desc FROM sys.indexes
+WHERE object_id = OBJECT_ID(N'dbo.Employees') AND name LIKE N'IX_Employees_%';
+```
+
+### Результат
+
+```text
+Before indexes
+EmployeeId DepartmentId Salary
+---------- ------------ ------
+1 1 65000.00
+2 1 72000.00
+3 1 55000.00
+Таблица "Employees". Сканирований 1, логических операций чтения 2, физических операций чтения 0, операций чтения страничного сервера 0, операций чтения, выполненных с упреждением 0, операций чтения страничного сервера, выполненных с упреждением 0, логических операций чтения LOB 0, физических операций чтения LOB 0, операций чтения LOB страничного сервера 0, операций чтения LOB, выполненных с упреждением 0, операций чтения LOB страничного сервера, выполненных с упреждением 0.
+Rows Executes StmtText StmtId NodeId Parent PhysicalOp LogicalOp Argument DefinedValues EstimateRows EstimateIO EstimateCPU AvgRowSize TotalSubtreeCost OutputList Warnings Type Parallel EstimateExecutions
+---- -------- -------- ------ ------ ------ ---------- --------- -------- ------------- ------------ ---------- ----------- ---------- ---------------- ---------- -------- ---- -------- ------------------
+3 1 SELECT [EmployeeId],[DepartmentId],[Salary] FROM [dbo].[Employees] WHERE [DepartmentId]=@1 AND [Salary]>@2 1 1 0 NULL NULL NULL NULL 3.3466401 NULL NULL NULL 3.2929999E-3 NULL NULL SELECT 0 NULL
+3 1   |--Clustered Index Scan(OBJECT:([Practice.db].[dbo].[Employees].[PK__Employee__7AD04F11301DD124]), WHERE:([Practice.db].[dbo].[Employees].[DepartmentId]=CONVERT_IMPLICIT(int,[@1],0) AND [Practice.db].[dbo].[Employees].[Salary]>CONVERT_IMPLICIT(decimal(10,0),[@2],0))) 1 2 1 Clustered Index Scan Clustered Index Scan OBJECT:([Practice.db].[dbo].[Employees].[PK__Employee__7AD04F11301DD124]), WHERE:([Practice.db].[dbo].[Employees].[DepartmentId]=CONVERT_IMPLICIT(int,[@1],0) AND [Practice.db].[dbo].[Employees].[Salary]>CONVERT_IMPLICIT(decimal(10,0),[@2],0)) [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] 3.3466401 0.003125 0.000168 24 3.2929999E-3 [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] NULL PLAN_ROW 0 1.0
+After indexes: optimizer choice
+EmployeeId DepartmentId Salary
+---------- ------------ ------
+1 1 65000.00
+2 1 72000.00
+3 1 55000.00
+Таблица "Employees". Сканирований 1, логических операций чтения 2, физических операций чтения 0, операций чтения страничного сервера 0, операций чтения, выполненных с упреждением 0, операций чтения страничного сервера, выполненных с упреждением 0, логических операций чтения LOB 0, физических операций чтения LOB 0, операций чтения LOB страничного сервера 0, операций чтения LOB, выполненных с упреждением 0, операций чтения LOB страничного сервера, выполненных с упреждением 0.
+Rows Executes StmtText StmtId NodeId Parent PhysicalOp LogicalOp Argument DefinedValues EstimateRows EstimateIO EstimateCPU AvgRowSize TotalSubtreeCost OutputList Warnings Type Parallel EstimateExecutions
+---- -------- -------- ------ ------ ------ ---------- --------- -------- ------------- ------------ ---------- ----------- ---------- ---------------- ---------- -------- ---- -------- ------------------
+3 1 SELECT [EmployeeId],[DepartmentId],[Salary] FROM [dbo].[Employees] WHERE [DepartmentId]=@1 AND [Salary]>@2 1 1 0 NULL NULL NULL NULL 3.3466401 NULL NULL NULL 3.2864001E-3 NULL NULL SELECT 0 NULL
+3 1   |--Index Seek(OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD) 1 2 1 Index Seek Index Seek OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] 3.3466401 0.003125 1.6140001E-4 24 3.2864001E-3 [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] NULL PLAN_ROW 0 1.0
+After indexes: forced seek for comparison
+EmployeeId DepartmentId Salary
+---------- ------------ ------
+1 1 65000.00
+2 1 72000.00
+3 1 55000.00
+Таблица "Employees". Сканирований 1, логических операций чтения 2, физических операций чтения 0, операций чтения страничного сервера 0, операций чтения, выполненных с упреждением 0, операций чтения страничного сервера, выполненных с упреждением 0, логических операций чтения LOB 0, физических операций чтения LOB 0, операций чтения LOB страничного сервера 0, операций чтения LOB, выполненных с упреждением 0, операций чтения LOB страничного сервера, выполненных с упреждением 0.
+Rows Executes StmtText StmtId NodeId Parent PhysicalOp LogicalOp Argument DefinedValues EstimateRows EstimateIO EstimateCPU AvgRowSize TotalSubtreeCost OutputList Warnings Type Parallel EstimateExecutions
+---- -------- -------- ------ ------ ------ ---------- --------- -------- ------------- ------------ ---------- ----------- ---------- ---------------- ---------- -------- ---- -------- ------------------
+3 1 SELECT EmployeeId, DepartmentId, Salary FROM dbo.Employees WITH (INDEX(IX_Employees_DepartmentId), FORCESEEK)
+WHERE DepartmentId = 1 AND Salary > 50000 2 1 0 NULL NULL NULL NULL 3.3466401 NULL NULL NULL 3.2864001E-3 NULL NULL SELECT 0 NULL
+3 1   |--Index Seek(OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD) 2 2 1 Index Seek Index Seek OBJECT:([Practice.db].[dbo].[Employees].[IX_Employees_DepartmentId]), SEEK:([Practice.db].[dbo].[Employees].[DepartmentId]=(1)),  WHERE:([Practice.db].[dbo].[Employees].[Salary]>(50000.)) ORDERED FORWARD, FORCEDINDEX [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] 3.3466401 0.003125 1.6140001E-4 24 3.2864001E-3 [Practice.db].[dbo].[Employees].[EmployeeId], [Practice.db].[dbo].[Employees].[Salary], [Practice.db].[dbo].[Employees].[DepartmentId] NULL PLAN_ROW 0 1.0
+name type_desc
+---- ---------
+IX_Employees_DepartmentId NONCLUSTERED
+IX_Employees_Salary NONCLUSTERED
+```
+
+### Вывод
+
+До создания индексов использован Clustered Index Scan. После создания оптимизатор самостоятельно выбрал Index Seek по IX_Employees_DepartmentId. Принудительный поиск приведён отдельным дополнительным запросом. Во всех трёх случаях logical reads = 2: на 10 строках изменения числа чтений нет. INCLUDE(Salary) покрывает запрос, а EmployeeId хранится как ключ кластерного индекса. Обе созданные структуры — NONCLUSTERED. Полные текстовые планы и STATISTICS IO приведены в результате.
