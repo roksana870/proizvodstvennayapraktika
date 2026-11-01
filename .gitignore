@@ -8,3 +8,4 @@
 *.bak
 .env
 appsettings.Development.json
+*.user
