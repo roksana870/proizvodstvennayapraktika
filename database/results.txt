@@ -1,0 +1,161 @@
+﻿Контекст базы данных изменен на "PracticeDB".
+===TASK 1===
+TABLE_NAME
+----------
+Departments
+EmployeeProjects
+Employees
+Projects
+ForeignKeyName SourceTable SourceColumn TargetTable TargetColumn
+-------------- ----------- ------------ ----------- ------------
+FK_EP_Employees EmployeeProjects EmployeeId Employees EmployeeId
+FK_EP_Projects EmployeeProjects ProjectId Projects ProjectId
+FK_Employees_Departments Employees DepartmentId Departments DepartmentId
+FK_Employees_Manager Employees ManagerId Employees EmployeeId
+TableName PrimaryKeyName
+--------- --------------
+Departments PK__Departme__B2079BEDBF753FD3
+EmployeeProjects PK_EmployeeProjects
+Employees PK__Employee__7AD04F1180168FA6
+Projects PK__Projects__761ABEF0BCC861CF
+TABLE_NAME COLUMN_NAME DATA_TYPE IS_NULLABLE
+---------- ----------- --------- -----------
+Departments DepartmentId int NO
+Departments DepartmentName nvarchar NO
+EmployeeProjects EmployeeId int NO
+EmployeeProjects ProjectId int NO
+EmployeeProjects Hours int NO
+Employees EmployeeId int NO
+Employees EmployeeName nvarchar NO
+Employees Salary decimal NO
+Employees HireDate date NO
+Employees DepartmentId int NO
+Employees ManagerId int YES
+Projects ProjectId int NO
+Projects ProjectName nvarchar NO
+Projects StartDate date NO
+===TASK 2===
+TableName RowCount
+--------- --------
+Departments 4
+Employees 10
+Projects 5
+EmployeeProjects 14
+===TASK 3===
+EmployeeId EmployeeName Salary
+---------- ------------ ------
+1 Анна Иванова 65000.00
+2 Пётр Сидоров 72000.00
+3 Мария Кузнецова 55000.00
+5 Ольга Смирнова 61000.00
+6 Дмитрий Орлов 58000.00
+7 Елена Волкова 52000.00
+10 Алексей Лебедев 90000.00
+EmployeeId EmployeeName HireDate
+---------- ------------ --------
+4 Иван Петров 2023-02-10
+7 Елена Волкова 2023-06-01
+EmployeeId EmployeeName
+---------- ------------
+1 Анна Иванова
+10 Алексей Лебедев
+EmployeeId EmployeeName DepartmentId
+---------- ------------ ------------
+5 Ольга Смирнова 2
+6 Дмитрий Орлов 2
+7 Елена Волкова 2
+EmployeeId EmployeeName Salary
+---------- ------------ ------
+3 Мария Кузнецова 55000.00
+4 Иван Петров 48000.00
+6 Дмитрий Орлов 58000.00
+7 Елена Волкова 52000.00
+8 Сергей Морозов 45000.00
+9 Наталья Соколова 43000.00
+===TASK 4===
+EmployeeName Salary
+------------ ------
+Алексей Лебедев 90000.00
+Пётр Сидоров 72000.00
+Анна Иванова 65000.00
+EmployeeName HireDate
+------------ --------
+Алексей Лебедев 2018-05-25
+Пётр Сидоров 2019-07-01
+Анна Иванова 2020-03-15
+Ольга Смирнова 2020-09-05
+Мария Кузнецова 2021-11-20
+EmployeeName DepartmentId Salary
+------------ ------------ ------
+Пётр Сидоров 1 72000.00
+Анна Иванова 1 65000.00
+Мария Кузнецова 1 55000.00
+Иван Петров 1 48000.00
+Ольга Смирнова 2 61000.00
+Дмитрий Орлов 2 58000.00
+Елена Волкова 2 52000.00
+Сергей Морозов 3 45000.00
+Наталья Соколова 3 43000.00
+Алексей Лебедев 4 90000.00
+===TASK 5===
+EmployeeCount TotalSalary AverageSalary MinSalary MaxSalary
+------------- ----------- ------------- --------- ---------
+10 589000.00 58900.00 43000.00 90000.00
+EmployeesAbove50000
+-------------------
+7
+===TASK 6===
+DepartmentId EmployeeCount AverageSalary TotalSalary
+------------ ------------- ------------- -----------
+4 1 90000.00 90000.00
+1 4 60000.00 240000.00
+2 3 57000.00 171000.00
+3 2 44000.00 88000.00
+===TASK 7===
+DepartmentId EmployeeCount
+------------ -------------
+1 4
+2 3
+DepartmentId AverageSalary
+------------ -------------
+1 60000.00
+2 57000.00
+4 90000.00
+DepartmentId TotalSalary
+------------ -----------
+1 240000.00
+2 171000.00
+===TASK 8===
+EmployeeName DepartmentName Salary
+------------ -------------- ------
+Ольга Смирнова Аналитика 61000.00
+Дмитрий Орлов Аналитика 58000.00
+Елена Волкова Аналитика 52000.00
+Алексей Лебедев Менеджмент 90000.00
+Пётр Сидоров Разработка 72000.00
+Анна Иванова Разработка 65000.00
+Мария Кузнецова Разработка 55000.00
+Иван Петров Разработка 48000.00
+Сергей Морозов Тестирование 45000.00
+Наталья Соколова Тестирование 43000.00
+===TASK 9===
+EmployeeId EmployeeName
+---------- ------------
+9 Наталья Соколова
+===TASK 10===
+EmployeeName DepartmentName ProjectName Hours
+------------ -------------- ----------- -----
+Дмитрий Орлов Аналитика AI Assistant 50
+Дмитрий Орлов Аналитика Data Warehouse 70
+Елена Волкова Аналитика Mobile App 95
+Ольга Смирнова Аналитика Data Warehouse 110
+Алексей Лебедев Менеджмент AI Assistant 200
+Алексей Лебедев Менеджмент CRM System 30
+Анна Иванова Разработка CRM System 120
+Анна Иванова Разработка Data Warehouse 80
+Иван Петров Разработка Legacy Refactor 40
+Иван Петров Разработка Mobile App 90
+Мария Кузнецова Разработка Mobile App 100
+Пётр Сидоров Разработка AI Assistant 60
+Пётр Сидоров Разработка CRM System 150
+Сергей Морозов Тестирование Legacy Refactor 130

@@ -1,3 +1,10 @@
 ﻿.vs/
 [Bb]in/
 [Oo]bj/
+
+# SQL Server and local secrets
+*.mdf
+*.ldf
+*.bak
+.env
+appsettings.Development.json
