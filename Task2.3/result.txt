@@ -1,0 +1,6 @@
+TryParse(123): True, 123
+Parse(123): True, 123
+TryParse(abc): False, 0
+Parse(abc): False, 0
+TryParse(999999999999999999999): False, 0
+Parse(999999999999999999999): False, 0
