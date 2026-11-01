@@ -1,0 +1,3 @@
+NoDiscount: 1000,00
+VipDiscount: 900,00
+PromoDiscount: 800,00
